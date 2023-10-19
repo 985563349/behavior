@@ -1,11 +1,12 @@
-import { Button } from '@/components/ui/button';
+import { Behavior } from '@/components/behavior';
+import { ThemeProvider } from '@/providers/theme';
 
-function App() {
+const App: React.FC = () => {
   return (
-    <div>
-      <Button>Click me</Button>
-    </div>
+    <ThemeProvider>
+      <Behavior />
+    </ThemeProvider>
   );
-}
+};
 
 export default App;
