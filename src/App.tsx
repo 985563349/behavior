@@ -1,10 +1,14 @@
 import { Behavior } from '@/components/behavior';
+
 import { ThemeProvider } from '@/providers/theme';
+import { ModalProvider } from '@/providers/modal';
 
 const App: React.FC = () => {
   return (
     <ThemeProvider>
-      <Behavior />
+      <ModalProvider>
+        <Behavior />
+      </ModalProvider>
     </ThemeProvider>
   );
 };
