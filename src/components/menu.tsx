@@ -10,8 +10,13 @@ import {
   MenubarSubTrigger,
   MenubarTrigger,
 } from '@/components/ui/menubar';
+import { useFlowEditor } from '@/components/flow-editor';
+import { useBehavior } from '@/hooks/use-behavior';
 
 const Menu: React.FC = () => {
+  const { fileNew, fileOpen, fileSave, fileSaveAs } = useBehavior();
+  const { canUndo, canRedo, undo, redo } = useFlowEditor();
+
   return (
     <Menubar className="rounded-none border-b border-none px-2 lg:px-4">
       <MenubarMenu>
@@ -29,10 +34,10 @@ const Menu: React.FC = () => {
       <MenubarMenu>
         <MenubarTrigger>File</MenubarTrigger>
         <MenubarContent>
-          <MenubarItem>
+          <MenubarItem onClick={fileNew}>
             New <MenubarShortcut>⇧⌘N</MenubarShortcut>
           </MenubarItem>
-          <MenubarItem>
+          <MenubarItem onClick={fileOpen}>
             Open <MenubarShortcut>⇧⌘O</MenubarShortcut>
           </MenubarItem>
           <MenubarSub>
@@ -41,10 +46,10 @@ const Menu: React.FC = () => {
               <MenubarItem disabled>No Recent Files</MenubarItem>
             </MenubarSubContent>
           </MenubarSub>
-          <MenubarItem>
+          <MenubarItem onClick={fileSave}>
             Save <MenubarShortcut>⌘S</MenubarShortcut>
           </MenubarItem>
-          <MenubarItem>
+          <MenubarItem onClick={fileSaveAs}>
             Save As...<MenubarShortcut>⇧⌘S</MenubarShortcut>
           </MenubarItem>
           <MenubarSeparator />
@@ -55,10 +60,10 @@ const Menu: React.FC = () => {
       <MenubarMenu>
         <MenubarTrigger>Edit</MenubarTrigger>
         <MenubarContent>
-          <MenubarItem>
+          <MenubarItem disabled={!canUndo} onClick={undo}>
             Undo <MenubarShortcut>⌘Z</MenubarShortcut>
           </MenubarItem>
-          <MenubarItem>
+          <MenubarItem disabled={!canRedo} onClick={redo}>
             Redo <MenubarShortcut>⇧⌘Z</MenubarShortcut>
           </MenubarItem>
           <MenubarSeparator />
@@ -83,5 +88,7 @@ const Menu: React.FC = () => {
     </Menubar>
   );
 };
+
+Menu.displayName = 'Menu';
 
 export { Menu };

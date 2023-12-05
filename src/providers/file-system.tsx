@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react';
 import { fileOpen, fileSave } from 'browser-fs-access';
 
-import { useIndexedDB } from '@/hooks/useIndexedDB';
+import { useIndexedDB } from '@/hooks/use-indexeddb';
 
 type FileWithHandle = {
   id: string;
@@ -10,7 +10,7 @@ type FileWithHandle = {
   origin?: File;
 };
 
-interface State {
+interface FileSystemState {
   files: FileWithHandle[];
   activeKey: string;
 }
@@ -26,7 +26,7 @@ interface FileSystemProviderState {
   openFile: () => Promise<FileWithHandle>;
   recentFile: (id: string) => Promise<FileWithHandle>;
   saveFile: (id: string, content: string) => Promise<FileWithHandle>;
-  saveFileAs: (content: string) => Promise<FileWithHandle>;
+  saveAsFile: (content: string) => Promise<FileWithHandle>;
 }
 
 const FileSystemProviderContext = createContext<FileSystemProviderState | null>(null);
@@ -57,16 +57,16 @@ async function verifyPermission(fileHandle: FileSystemHandle, withWrite: boolean
 export function FileSystemProvider(props: FileSystemProviderProps) {
   const { children } = props;
 
-  const [state, setState] = useIndexedDB<State>('file-system', {
+  const { data, isReady, update } = useIndexedDB<FileSystemState>('file-system', {
     files: [],
     activeKey: '',
   });
 
   const newFile = () => {
-    const currentFile = { id: crypto.randomUUID(), name: 'Untitled' };
+    const currentFile: FileWithHandle = { id: crypto.randomUUID(), name: 'Untitled' };
 
-    setState((prevState) => ({
-      files: [...prevState.files.filter((file) => file.handle), currentFile],
+    update((prevData) => ({
+      files: [...prevData.files.filter((file) => file.handle), currentFile],
       activeKey: currentFile.id,
     }));
 
@@ -83,8 +83,8 @@ export function FileSystemProvider(props: FileSystemProviderProps) {
       origin,
     };
 
-    setState((prevState) => ({
-      files: [...prevState.files, currentFile],
+    update((prevData) => ({
+      files: [...prevData.files, currentFile],
       activeKey: currentFile.id,
     }));
 
@@ -92,7 +92,7 @@ export function FileSystemProvider(props: FileSystemProviderProps) {
   };
 
   const recentFile = async (id: string) => {
-    const currentFile = state.files.find((file) => file.id === id);
+    const currentFile = data.files.find((file) => file.id === id);
 
     if (!currentFile) {
       throw new DOMException('file does not exist.');
@@ -107,8 +107,8 @@ export function FileSystemProvider(props: FileSystemProviderProps) {
     const origin = existingHandle ? await existingHandle.getFile() : await fileOpen();
     currentFile.origin = origin;
 
-    setState((prevState) => ({
-      files: [...prevState.files],
+    update((prevData) => ({
+      files: [...prevData.files],
       activeKey: currentFile.id,
     }));
 
@@ -116,7 +116,7 @@ export function FileSystemProvider(props: FileSystemProviderProps) {
   };
 
   const saveFile = async (id: string, content: string) => {
-    const currentFile = state.files.find((file) => file.id === id);
+    const currentFile = data.files.find((file) => file.id === id);
 
     if (!currentFile) {
       throw new DOMException('file does not exist.');
@@ -139,15 +139,15 @@ export function FileSystemProvider(props: FileSystemProviderProps) {
       currentFile.name = origin.name;
     }
 
-    setState((prevState) => ({
-      ...prevState,
-      files: [...prevState.files],
+    update((prevData) => ({
+      ...prevData,
+      files: [...prevData.files],
     }));
 
     return currentFile;
   };
 
-  const saveFileAs = async (content: string) => {
+  const saveAsFile = async (content: string) => {
     const currentFile: FileWithHandle = { id: crypto.randomUUID(), name: 'Untitled' };
 
     const blob = new Blob([content], { type: 'text/plain' });
@@ -161,29 +161,29 @@ export function FileSystemProvider(props: FileSystemProviderProps) {
       currentFile.name = origin.name;
     }
 
-    setState((prevState) => ({
-      files: [...prevState.files, currentFile],
+    update((prevData) => ({
+      files: [...prevData.files, currentFile],
       activeKey: currentFile.id,
     }));
 
     return currentFile;
   };
 
-  const file = state.files.find((file) => file.id === state.activeKey);
+  const file = data.files.find((file) => file.id === data.activeKey);
 
   const value = {
-    files: state.files,
+    files: data.files,
     file,
     newFile,
     openFile,
     recentFile,
     saveFile,
-    saveFileAs,
+    saveAsFile,
   };
 
   return (
     <FileSystemProviderContext.Provider value={value}>
-      {children}
+      {isReady ? children : null}
     </FileSystemProviderContext.Provider>
   );
 }
